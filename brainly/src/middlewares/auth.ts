@@ -1,6 +1,6 @@
 import { Request, Response,NextFunction } from "express";
 import jwt  from "jsonwebtoken";
-const JWT_SECRET = "SKSMDmdks";
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 
 async function auth (req:Request,res:Response,next:NextFunction){
