@@ -15,7 +15,13 @@ const JWT_SECRET = "SKSMDmdks";
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+
+
+app.use(cors({
+  origin: "https://second-brain-chi-seven.vercel.app",
+  credentials: true // if you need cookies or headers sent
+}));
+
 
 app.post("/api/v1/signup", ZodAuth, async (req: any, res: any) => {
   const { username, password, email } = req.body;
@@ -207,7 +213,7 @@ async function main() {
     console.log("Successfully connected to MongoDB");
 
     // Start the server
-    app.listen(process.env.PORT, () => {
+    app.listen(process.env.PORT || 4000, () => {
       console.log("Listening on Port 3000");
     });
   } catch (err) {
