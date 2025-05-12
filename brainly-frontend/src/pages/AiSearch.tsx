@@ -152,7 +152,7 @@ export function AiSearch() {
       {/* Multiple Results */}
       {results.length > 0 && (
         <div className="relative z-10 mt-10 flex flex-wrap justify-center gap-6">
-          {results.map(({ type, link, title, userId }) => (
+          {results.map(({ type, link, title }) => (
             <Card
               key={link}
               type={type as "twitter" | "youtube" | "reddit" | "Link"}
@@ -167,10 +167,10 @@ export function AiSearch() {
                   transition: Bounce,
                 });
               }}
-              onDelete={() => {
-                setContentToDelete(userId); // Set the content ID to be deleted
-                setDeleteModalOpen(true); // Open the delete modal
-              }}
+              // onDelete={() => {
+                // setContentToDelete(userId); // Set the content ID to be deleted
+                // setDeleteModalOpen(true); // Open the delete modal
+              // }}
             />
           ))}
         </div>
