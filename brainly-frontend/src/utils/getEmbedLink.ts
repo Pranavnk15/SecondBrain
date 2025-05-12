@@ -7,10 +7,11 @@ export const getEmbedLink = ({ link, type }: CardProps): string => {
   switch (type) {
     case "youtube": {
       const videoIdMatch = link.match(
-        /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|v\/|.+?v=))([^?&]+)/,
-      );
-      const videoId = videoIdMatch ? videoIdMatch[1] : "";
-      return `https://www.youtube.com/embed/${videoId}`;
+  /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|.+?v=))([^?&]+)/,
+);
+const videoId = videoIdMatch ? videoIdMatch[1] : "";
+return `https://www.youtube.com/embed/${videoId}?autoplay=0&origin=${window.location.origin}`;
+
     }
 
     case "reddit": {
