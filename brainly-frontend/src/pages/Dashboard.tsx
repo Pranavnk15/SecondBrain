@@ -39,11 +39,15 @@ export function Dashboard() {
   useEffect(() => {
     async function getName() {
       try {
-        const response = await axios.get(`${BACKEND_URL}/api/v1/username`, {
-          headers: { 
-            Authorization: "Bearer "+ localStorage.getItem("token")
-           },
-        });
+        const token = localStorage.getItem("token") || "";
+
+const response = await axios.get(`${BACKEND_URL}/api/v1/username`, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  withCredentials: true,
+});
         setName(response.data.username);
       } catch {
         console.error("Error fetching username");
@@ -70,8 +74,10 @@ const handleDelete = async () => {
     await axios.delete(`${BACKEND_URL}/api/v1/content`, {
       data: { contentId: contentToDelete },
       headers: { 
-          Authorization: "Bearer "+ localStorage.getItem("token")
+          Authorization: "Bearer "+ localStorage.getItem("token"),
+           "Content-Type": "application/json",
        },
+        withCredentials: true,
     });
     toast.update(toastId, {
       render: "Content deleted!",

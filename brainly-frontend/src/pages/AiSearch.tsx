@@ -45,6 +45,7 @@ export function AiSearch() {
              Authorization: "Bearer "+ localStorage.getItem("token")|| "",
             "Content-Type": "application/json",
           },
+          withCredentials: true
         }
       );
 
@@ -86,8 +87,9 @@ export function AiSearch() {
         data: { contentId: contentToDelete },
         headers: {
              Authorization: "Bearer "+ localStorage.getItem("token")
-             
+
            },
+           withCredentials: true,
       });
 
       toast.success("Content deleted!", {

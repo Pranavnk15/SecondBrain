@@ -20,11 +20,20 @@ export function Signin() {
       const password = passwordRef.current?.value;
       // const email = emailRef.current?.value;
 
-      const response = await axios.post(BACKEND_URL + "/api/v1/signin", {
-        email,
-        password,
-        
-      });
+      const response = await axios.post(
+  BACKEND_URL + "/api/v1/signin",
+  {
+    email,
+    password,
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    withCredentials: true,
+  }
+);
+
 
       const jwt = response.data.token;
       localStorage.setItem("token", jwt);

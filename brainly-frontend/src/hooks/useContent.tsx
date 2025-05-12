@@ -11,6 +11,7 @@ export function useContent() {
         headers: {
           Authorization: "Bearer "+ localStorage.getItem("token") || "",
         },
+        withCredentials: true,
       });
       setContents(response.data.data);
     } catch (error) {

@@ -31,6 +31,22 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "token"],
 }));
 
+app.options("*", cors({
+  origin: "https://second-brain-chi-seven.vercel.app",
+  credentials: true,
+}));
+
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://second-brain-chi-seven.vercel.app");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, token");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  next();
+});
+
+
+
 app.use(express.json());
 
 // Auth Routes

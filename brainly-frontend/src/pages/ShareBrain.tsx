@@ -16,7 +16,12 @@ export function ShareBrain() {
   useEffect(() => {
     async function fetchSharedContent() {
       try {
-        const res = await axios.get(`${BACKEND_URL}/api/v1/brain/${hash}`);
+        const res = await axios.get(`${BACKEND_URL}/api/v1/brain/${hash}`, {
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: true,
+});
         if (res.data.username && res.data.content?.length) {
           setUsername(res.data.username);
           setContent(res.data.content);

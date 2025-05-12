@@ -44,7 +44,9 @@ export function CreateContentModal({ open, onClose }: CreateContentModalProps) {
       {
         headers: {
             Authorization: "Bearer "+ localStorage.getItem("token") || "",
+            "Content-Type": "application/json",
         },
+         withCredentials:true,
       }
     );
 

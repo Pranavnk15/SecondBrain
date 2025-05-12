@@ -55,11 +55,21 @@ if (!/\S+@\S+\.\S+/.test(email) || !validTLDs.includes(tld)) {
     if (!validateFields(username, password, email)) return;
 
     try {
-      const response = await axios.post(BACKEND_URL + "/api/v1/signup", {
-        username,
-        password,
-        email
-      });
+      const response = await axios.post(
+  BACKEND_URL + "/api/v1/signup",
+  {
+    username,
+    password,
+    email,
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    withCredentials: true,
+  }
+);
+
        console.log(response.data.token);
       localStorage.setItem("token", response.data.token);
       navigate("/dashboard");

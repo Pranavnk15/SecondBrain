@@ -17,7 +17,9 @@ export function ShareButton() {
         {
           headers: {
               Authorization: "Bearer "+ localStorage.getItem("token"),
+                "Content-Type": "application/json",
           },
+            withCredentials: true,
         }
       );
 
