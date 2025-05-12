@@ -47,8 +47,8 @@ export function useContent() {
   useEffect(() => {
     refresh();
 
-    const interval = setInterval(refresh, 10000); // auto-refresh every 10s
-    return () => clearInterval(interval);
+    // const interval = setInterval(refresh, 10000); // auto-refresh every 10s
+    // return () => clearInterval(interval);
   }, [refresh]);
 
   return { contents, refresh };

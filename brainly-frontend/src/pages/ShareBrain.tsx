@@ -22,7 +22,7 @@ export function ShareBrain() {
   },
   withCredentials: true,
 });
-        if (res.data.username && res.data.content?.length) {
+        if (!res.data.username && res.data.content?.length) {
           setUsername(res.data.username);
           setContent(res.data.content);
           setError(false);
