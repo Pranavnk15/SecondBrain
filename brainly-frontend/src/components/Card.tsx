@@ -133,7 +133,7 @@ export function Card({ title, link, type, onDelete, onShare }: CardProps) {
               allowFullScreen
             />
           ) : (
-            <div className="text-sm text-red-400 p-4">Invalid YouTube link</div>
+            <div className="text-sm text-red-400 p-4">Invalid link</div>
           )}
         </div>
       </div>

@@ -6,8 +6,9 @@ interface CardProps {
 export const getEmbedLink = ({ link, type }: CardProps): string => {
   switch (type) {
     case "youtube": {
+      // Match regular youtube.com/watch or youtube.com/live links
       const videoIdMatch = link.match(
-        /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([^?&"/]+)/,
+        /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/)|youtu\.be\/)([^?&"/]+)/,
       );
       const videoId = videoIdMatch ? videoIdMatch[1] : "";
       if (!videoId) return "";
