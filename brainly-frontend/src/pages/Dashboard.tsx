@@ -17,7 +17,6 @@ import { LogOut } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
 
-// 👇 Add this interface if not already defined
 interface ContentItem {
   _id: string;
   title: string;
@@ -39,18 +38,19 @@ export function Dashboard() {
   useEffect(() => {
     async function getName() {
       try {
-        const token = localStorage.getItem("token") || "";
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-const response = await axios.get(`${BACKEND_URL}/api/v1/username`, {
-  headers: {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
-});
+        const response = await axios.get(`${BACKEND_URL}/api/v1/username`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        });
         setName(response.data.username);
-      } catch {
-        console.error("Error fetching username");
+      } catch (error) {
+        console.error("Error fetching username:", error);
       }
     }
     getName();
@@ -62,45 +62,49 @@ const response = await axios.get(`${BACKEND_URL}/api/v1/username`, {
       : contents.filter((item: ContentItem) => item.type === textData);
   }, [contents, textData]);
 
-const handleDelete = async () => {
-  if (!contentToDelete) return;
+  const handleDelete = async () => {
+    if (!contentToDelete) return;
 
-  const toastId = toast.loading("Deleting...", {
-    position: "top-center",
-    theme: "dark",
-  });
+    const toastId = toast.loading("Deleting...", {
+      position: "top-center",
+      theme: "dark",
+    });
 
-  try {
-    await axios.delete(`${BACKEND_URL}/api/v1/content`, {
-      data: { contentId: contentToDelete },
-      headers: { 
-          Authorization: "Bearer "+ localStorage.getItem("token"),
-           "Content-Type": "application/json",
-       },
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+
+      await axios.delete(`${BACKEND_URL}/api/v1/content`, {
+        data: { contentId: contentToDelete },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         withCredentials: true,
-    });
-    toast.update(toastId, {
-      render: "Content deleted!",
-      type: "success",
-      isLoading: false,
-      autoClose: 800,
-      transition: Bounce,
-    });
-    refresh();
-  } catch {
-    toast.update(toastId, {
-      render: "Failed to delete content.",
-      type: "error",
-      isLoading: false,
-      autoClose: 800,
-      transition: Bounce,
-    });
-  } finally {
-    setDeleteModalOpen(false);
-    setContentToDelete(null);
-  }
-};
+      });
 
+      toast.update(toastId, {
+        render: "Content deleted!",
+        type: "success",
+        isLoading: false,
+        autoClose: 800,
+        transition: Bounce,
+      });
+      refresh();
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.update(toastId, {
+        render: "Failed to delete content.",
+        type: "error",
+        isLoading: false,
+        autoClose: 800,
+        transition: Bounce,
+      });
+    } finally {
+      setDeleteModalOpen(false);
+      setContentToDelete(null);
+    }
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -184,7 +188,6 @@ const handleDelete = async () => {
             <div className="flex items-center gap-3">
               <ShareButton />
 
-              {/* ✅ Logout icon as raw button instead of using Button component */}
               <button
                 onClick={() => setLogoutModalOpen(true)}
                 disabled={isLoggingOut}
@@ -204,7 +207,7 @@ const handleDelete = async () => {
           </div>
         </div>
 
-        <div className="flex-1  mt-8 overflow-y-auto pb-6 flex flex-wrap gap-6">
+        <div className="flex-1 mt-8 overflow-y-auto pb-6 flex flex-wrap gap-6">
           {[...filteredContents]
             .slice()
             .reverse()
