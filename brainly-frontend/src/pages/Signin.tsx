@@ -2,7 +2,7 @@ import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios,{ AxiosError } from "axios";
 import { BACKEND_URL } from "../config";
 import { motion } from "framer-motion";
 import FallingStars from "./FallingStar";
@@ -42,20 +42,21 @@ theme: "dark",
 transition: Bounce,
 });
 
-    } catch(err) {
-       const e = err as Error;
-        console.log(e);
-      toast.error(e.response.data.msg, {
-position: "top-center",
-autoClose: 3000,
-hideProgressBar: false,
-closeOnClick: false,
-pauseOnHover: true,
-draggable: true,
-progress: undefined,
-theme: "dark",
-transition: Bounce
-});
+    } catch (err) {
+  const error = err as AxiosError<{ msg: string }>;
+  console.log(error);
+
+  toast.error(error.response?.data.msg || "An error occurred", {
+    position: "top-center",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: false,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "dark",
+    transition: Bounce
+  });
     }
   }
 

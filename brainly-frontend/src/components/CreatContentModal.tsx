@@ -57,7 +57,7 @@ export function CreateContentModal({ open, onClose }: CreateContentModalProps) {
     });
 
     onClose();
-  } catch (err) {
+  } catch {
     toast.update(toastId, {
       render: "Failed to add content",
       type: "error",

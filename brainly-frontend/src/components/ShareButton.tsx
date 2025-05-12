@@ -40,7 +40,7 @@ export function ShareButton() {
       }
 
       setIsSharing(!isSharing);
-    } catch (err) {
+    } catch {
       toast.error("❌ Error toggling share status.", {
         position: "top-center",
         autoClose: 500,

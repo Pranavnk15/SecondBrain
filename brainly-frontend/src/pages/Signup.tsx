@@ -70,15 +70,24 @@ if (!/\S+@\S+\.\S+/.test(email) || !validTLDs.includes(tld)) {
         transition: Bounce
       });
     }
-     catch (e :unknown) {
-      console.log(e);
-      toast.error(e.response.data.msg, {
-        position: "top-center",
-        autoClose: 3000,
-        theme: "dark",
-        transition: Bounce
-      });
-    }
+    catch (e: unknown) {
+  if (axios.isAxiosError(e) && e.response) {
+    toast.error(e.response.data.msg, {
+      position: "top-center",
+      autoClose: 3000,
+      theme: "dark",
+      transition: Bounce,
+    });
+  } else {
+    toast.error("An unknown error occurred", {
+      position: "top-center",
+      autoClose: 3000,
+      theme: "dark",
+      transition: Bounce,
+    });
+  }
+}
+
   }
 
   return (
