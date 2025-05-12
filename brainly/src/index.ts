@@ -170,21 +170,34 @@ app.delete("/api/v1/content", auth, async (req: any, res:any) => {
 });
 
 // Share Link
-app.post("/api/v1/brain/share", auth, async (req: any, res) => {
+app.post("/api/v1/brain/share", auth, async (req: any, res:any) => {
   const { share } = req.body;
 
   try {
-    if (share) {
+    if (share === 1) {
+      // Enable sharing (create a new link)
       const link = await LinkModel.create({ userId: req.userId, hash: random(10) });
-      res.json({ msg: "Link created", link: link.hash });
-    } else {
-      await LinkModel.deleteOne({ userId: req.userId });
-      res.json({ msg: "Link removed" });
+      return res.json({ msg: "Link created", link: link.hash });
     }
+
+    if (share === 0) {
+      // Disable sharing (remove the link)
+      await LinkModel.deleteOne({ userId: req.userId });
+      return res.json({ msg: "Link removed" });
+    }
+
+    if (share === 2) {
+      // Check if the user has an active share link
+      const link = await LinkModel.findOne({ userId: req.userId });
+      return res.json({ isSharing: link ? 1 : 0 });
+    }
+
+    return res.status(400).json({ msg: "Invalid share value." });
   } catch (err) {
-    res.status(500).json({ msg: "Error sharing link", err });
+    res.status(500).json({ msg: "Error managing share status", err });
   }
 });
+
 
 app.get("/api/v1/brain/:shareLink", async (req: any, res:any) => {
   const { shareLink } = req.params;
@@ -226,6 +239,8 @@ app.get("/debug-qdrant", async (req, res) => {
     res.status(500).json({ msg: "Qdrant test failed" });
   }
 })
+
+
 
 // Connect to MongoDB and start server
 async function main() {

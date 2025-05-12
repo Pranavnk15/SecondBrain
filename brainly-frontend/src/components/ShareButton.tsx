@@ -1,4 +1,3 @@
-// src/components/ShareButton.tsx
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Bounce, toast } from "react-toastify";
@@ -7,22 +6,24 @@ import { Button } from "./Button";
 import { BACKEND_URL } from "../config";
 
 export function ShareButton() {
-  const [isSharing, setIsSharing] = useState<boolean | null>(null);  // Initially null to indicate loading
+  const [isSharing, setIsSharing] = useState(false);
 
-  // Fetch the initial sharing state from the backend
+  // Fetch share status from backend when the component mounts
   useEffect(() => {
     const fetchShareStatus = async () => {
       try {
-        const response = await axios.get(`${BACKEND_URL}/api/v1/brain/share`, {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        });
-
-        // Set initial share state based on backend response
-        setIsSharing(response.data.share);
+        const response = await axios.post(
+          `${BACKEND_URL}/api/v1/brain/share`,
+          { share: 2 }, // Request the current status
+          {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
+        );
+        setIsSharing(response.data.isSharing === 1);
       } catch {
         toast.error("❌ Error fetching share status.", {
           position: "top-center",
@@ -37,12 +38,10 @@ export function ShareButton() {
   }, []);
 
   const handleShareToggle = async () => {
-    if (isSharing === null) return; // Prevent action while loading
-
     try {
       const response = await axios.post(
         `${BACKEND_URL}/api/v1/brain/share`,
-        { share: !isSharing },
+        { share: isSharing ? 0 : 1 }, // Toggle the share state (0 to disable, 1 to enable)
         {
           headers: {
             Authorization: "Bearer " + localStorage.getItem("token"),
@@ -80,8 +79,6 @@ export function ShareButton() {
       });
     }
   };
-
-  if (isSharing === null) return <div>Loading...</div>; // Show loading until state is fetched
 
   return (
     <Button
