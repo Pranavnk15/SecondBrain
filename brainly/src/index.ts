@@ -16,6 +16,7 @@ console.log("JWT SECRET --> " + JWT_SECRET);
 const app = express();
 
 
+
 // app.use(cors({
 //   origin: "https://second-brain-chi-seven.vercel.app",
 //   credentials: true // if you need cookies or headers sent
@@ -213,6 +214,9 @@ app.post("/api/v1/search", auth, async (req: any, res: any) => {
 const MONGO_URL = process.env.MONGO_URL;
 console.log("aniket " + process.env.MONGO_URL);
 
+const port = Number(process.env.PORT) || 4000;
+
+
 async function main() {
   try {
     // Attempt to connect to MongoDB
@@ -222,8 +226,8 @@ async function main() {
     console.log("Successfully connected to MongoDB");
 
     // Start the server
-    app.listen(process.env.PORT || 4000, () => {
-      console.log("Listening on Port 3000");
+    app.listen(port,'0.0.0.0', () => {
+      console.log(`Server running on port ${port}`);
     });
   } catch (err) {
     // Log any error that occurs during the connection process
