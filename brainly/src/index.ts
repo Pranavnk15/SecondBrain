@@ -1,27 +1,29 @@
 import express from "express";
+import axios from "axios";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
 import cors from "cors";
+import dotenv from "dotenv";
+import { v4 as uuidv4 } from "uuid";
 import { ZodAuth } from "./middlewares/zodValidation";
 import { auth } from "./middlewares/auth";
-import { LinkModel, UserModel, ContentModel, TagsModel } from "./db";
+import { LinkModel, UserModel, ContentModel } from "./db";
 import { random } from "./utils";
-import { storeCard, deleteCardFromQdrant, queryRelatedCard } from "./embedding";
-import dotenv from "dotenv";
+import {
+  storeCard,
+  deleteCardFromQdrant,
+  queryRelatedCard,
+} from "./embedding";
+
 dotenv.config();
-const JWT_SECRET = process.env.JWT_SECRET!;
-console.log("JWT SECRET --> " + JWT_SECRET);
+
 const app = express();
+const PORT = Number(process.env.PORT) || 4000;
+const MONGO_URL = process.env.MONGO_URL!;
+const JWT_SECRET = process.env.JWT_SECRET!;
 
-
-
-// app.use(cors({
-//   origin: "https://second-brain-chi-seven.vercel.app",
-//   credentials: true // if you need cookies or headers sent
-// }));
-
+// Middleware
 app.use(cors({
   origin: "https://second-brain-chi-seven.vercel.app",
   credentials: true,
@@ -29,138 +31,106 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "token"],
 }));
 
-
-app.options("*", cors({
-  origin: "https://second-brain-chi-seven.vercel.app",
-  credentials: true,
-  methods: ["GET", "POST", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "token"]
-}));
-
-
 app.use(express.json());
 
-app.post("/api/v1/signup", ZodAuth, async (req: any, res: any) => {
+// Auth Routes
+app.post("/api/v1/signup", ZodAuth, async (req:any, res:any) => {
   const { username, password, email } = req.body;
-  const hashPassword = await bcrypt.hash(password, 2);
+  const hashedPassword = await bcrypt.hash(password, 2);
 
   try {
-    const newUser = await UserModel.create({ username, password: hashPassword, email });
-    const token = jwt.sign({ userId: newUser._id, username }, JWT_SECRET);
-
-    res.status(201).json({
-      msg: "Signup successful",
-      data: newUser,
-      token: token,
+    const newUser = await UserModel.create({
+      username,
+      password: hashedPassword,
+      email,
     });
-  } 
-  catch (error: any) {
-    console.log("Signup Error:", error);
+
+    const token = jwt.sign({ userId: newUser._id, username }, JWT_SECRET);
+    res.status(201).json({ msg: "Signup successful", data: newUser, token });
+  } catch (error: any) {
+    console.error("Signup Error:", error);
     if (error.code === 11000) {
       const duplicateField = Object.keys(error.keyPattern)[0];
       return res.status(409).json({
         msg: `${duplicateField.charAt(0).toUpperCase() + duplicateField.slice(1)} already exists`,
       });
     }
-
-    res.status(500).json({
-      msg: "Internal server error. Please try again later.",
-      error: error.message,
-    });
+    res.status(500).json({ msg: "Internal server error", error: error.message });
   }
 });
 
-app.post("/api/v1/signin", ZodAuth, async (req: any, res: any) => {
+app.post("/api/v1/signin", ZodAuth, async (req:any, res:any) => {
   const { email, password } = req.body;
   const user = await UserModel.findOne({ email });
 
-  if (!user) {
-    res.status(404).json({ msg: "User doesn't exist" });
-    return;
-  }
+  if (!user) return res.status(404).json({ msg: "User doesn't exist" });
 
   try {
-    if (!user.password) {
-      res.status(500).json({ msg: "Password is missing for this user" });
-      return;
-    }
+    if (!user.password) return res.status(500).json({ msg: "Password missing" });
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      res.json({ msg: "Invalid credentials, failed to sign in" });
-      return;
-    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ msg: "Invalid credentials" });
 
     const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET);
     res.json({ msg: "Signed in successfully", token });
   } catch (error) {
-    res.json({ error });
+    res.status(500).json({ msg: "Login failed", error });
   }
 });
 
-app.get("/api/v1/username", auth, async (req: any, res: any) => {
-
-  res.json({ username:req.username , userId: req.userId});
+// User Info
+app.get("/api/v1/username", auth, async (req: any, res) => {
+  res.json({ username: req.username, userId: req.userId });
 });
 
-app.post("/api/v1/content", auth, async (req: any, res: any) => {
+// Content Management
+app.post("/api/v1/content", auth, async (req: any, res) => {
   const { link, type, title, description } = req.body;
   const userId = req.userId;
+  const qdrantId = uuidv4();
 
   try {
-    const uuid = uuidv4(); // ✅ generate UUID for Qdrant ID
-    
-    console.time("Mongo Save");
     const content = await ContentModel.create({
       link,
       type,
       title,
-      description:title+ " " +description ,
+      description,
       userId,
-      qdrantId: uuid, 
+      qdrantId,
       tags: [],
     });
 
-    console.timeEnd("Mongo Save");
-
-console.time("Qdrant Save");
     await storeCard({
-      id: uuid, // ✅ use UUID here
+      id: qdrantId,
       title,
       description,
       type,
       link,
       userId,
     });
-    console.timeEnd("Qdrant Save");
 
-    res.json({ msg: "Content created and indexed", data: content });
+    res.json({ msg: "Content created", data: content });
   } catch (err) {
-    console.error("Content creation error:", err);
+    console.error("Create Error:", err);
     res.status(500).json({ msg: "Failed to save content" });
   }
 });
 
-
-app.get("/api/v1/content", auth, async (req: any, res: any) => {
+app.get("/api/v1/content", auth, async (req: any, res) => {
   const userId = req.userId;
   const content = await ContentModel.find({ userId }).populate("userId");
   res.json({ msg: "Get Content", data: content });
 });
 
-app.delete("/api/v1/content", auth, async (req: any, res: any) => {
+app.delete("/api/v1/content", auth, async (req: any, res:any) => {
   const contentId = req.body.contentId;
-     console.log(contentId);
-     
+
   try {
     const content = await ContentModel.findOne({ _id: contentId, userId: req.userId });
-
-    if (!content) {
-      return res.status(404).json({ msg: "Content not found" });
-    }
+    if (!content) return res.status(404).json({ msg: "Content not found" });
 
     await ContentModel.deleteOne({ _id: contentId });
-    await deleteCardFromQdrant(content.qdrantId); // ✅ Use stored UUID
+    await deleteCardFromQdrant(content.qdrantId);
 
     res.json({ msg: "Content deleted" });
   } catch (err) {
@@ -169,79 +139,78 @@ app.delete("/api/v1/content", auth, async (req: any, res: any) => {
   }
 });
 
+// Share Link
+app.post("/api/v1/brain/share", auth, async (req: any, res) => {
+  const { share } = req.body;
 
-app.post("/api/v1/brain/share", auth, async (req: any, res: any) => {
   try {
-    const share = req.body.share;
     if (share) {
       const link = await LinkModel.create({ userId: req.userId, hash: random(10) });
-      res.json({ msg: "Updated shareable link", link: link.hash });
+      res.json({ msg: "Link created", link: link.hash });
     } else {
       await LinkModel.deleteOne({ userId: req.userId });
-      res.json({ msg: "Link deleted" });
+      res.json({ msg: "Link removed" });
     }
   } catch (err) {
-    res.json({ msg: "Duplicate link or link already exists", err });
+    res.status(500).json({ msg: "Error sharing link", err });
   }
 });
 
-app.get("/api/v1/brain/:shareLink", async (req: any, res: any) => {
-  const hash = req.params.shareLink;
-  const link = await LinkModel.findOne({ hash });
+app.get("/api/v1/brain/:shareLink", async (req: any, res:any) => {
+  const { shareLink } = req.params;
+  const link = await LinkModel.findOne({ hash: shareLink });
 
-  if (!link) {
-    res.status(411).json({ msg: "Invalid link" });
-    return;
-  }
+  if (!link) return res.status(404).json({ msg: "Invalid link" });
 
   const content = await ContentModel.find({ userId: link.userId });
-  const user = await UserModel.findOne({ _id: link.userId });
+  const user = await UserModel.findById(link.userId);
 
-  if (!user) {
-    res.status(411).json({ message: "User not found (unexpected error)" });
-    return;
-  }
+  if (!user) return res.status(500).json({ msg: "User not found" });
 
-  res.json({ msg: "Share Link", username: user.username, content });
+  res.json({ msg: "Share Link Data", username: user.username, content });
 });
 
-app.post("/api/v1/search", auth, async (req: any, res: any) => {
+// Semantic Search
+app.post("/api/v1/search", auth, async (req: any, res) => {
   const { query } = req.body;
 
   try {
-    console.log("Querying with userId:", req.userId);
-
     const results = await queryRelatedCard(query, req.userId);
     res.json({ msg: "Search results", results });
   } catch (err) {
     console.error("Search Error:", err);
-    res.status(500).json({ msg: "Error during semantic search" });
+    res.status(500).json({ msg: "Search failed" });
   }
 });
 
-const MONGO_URL = process.env.MONGO_URL;
-console.log("aniket " + process.env.MONGO_URL);
 
-const port = Number(process.env.PORT) || 4000;
-
-
+// Connect to MongoDB and start server
 async function main() {
   try {
-    // Attempt to connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URL ?? (() => { throw new Error("MONGO_URL is not defined"); })());
-    
-    // Once the connection is successful, log the success message
-    console.log("Successfully connected to MongoDB");
+    await mongoose.connect(MONGO_URL);
+    console.log("✅ Connected to MongoDB");
 
-    // Start the server
-    app.listen(port,'0.0.0.0', () => {
-      console.log(`Server running on port ${port}`);
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (err) {
-    // Log any error that occurs during the connection process
-    console.error("Error connecting to MongoDB:", err);
+    console.error("❌ MongoDB connection error:", err);
   }
 }
 
-main();
 
+app.get("/debug-qdrant", async (req, res) => {
+  try {
+    const response = await axios.get(`${process.env.QDRANT_URL}/collections`, {
+      headers: {
+        'Authorization': `Bearer ${process.env.QDRANT_API_KEY}`,
+      },
+    });
+    res.json(response.data);
+  } catch (err:any) {
+    console.error(err);
+    res.status(500).json({ msg: "Qdrant test failed" });
+  }
+})
+
+main();

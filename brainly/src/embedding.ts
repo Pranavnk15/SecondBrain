@@ -2,18 +2,18 @@ import dotenv from "dotenv";
 import { QdrantClient } from "@qdrant/js-client-rest";
 import { pipeline } from "@xenova/transformers";
 import { v4 as uuidv4 } from "uuid";
-// import { PointIdsList } from "@qdrant/js-client-rest"; 
 
 dotenv.config();
 
-// Qdrant Cloud client
+// Initialize Qdrant Client
 const qdrant = new QdrantClient({
   url: process.env.QDRANT_URL!,
   apiKey: process.env.QDRANT_API_KEY!,
 });
 
-// Load embedding model once
+// Singleton embedder
 let embedder: any;
+
 async function loadModel() {
   if (!embedder) {
     embedder = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
@@ -22,25 +22,20 @@ async function loadModel() {
   }
 }
 
-// Generate embedding locally
 export async function getEmbedding(text: string): Promise<number[]> {
-    try {
-    // Your logic to get the embedding from a model/API
-      await loadModel();
-  const output = await embedder(text, {
-    pooling: "mean",
-    normalize: true,
-  });
-  return Array.from(output.data as Float32Array);
-}
-catch (err) {
-    console.error("Error in embedding:", err);
-    throw new Error("Failed to get embedding");
+  try {
+    await loadModel();
+    const output = await embedder(text, {
+      pooling: "mean",
+      normalize: true,
+    });
+    return Array.from(output.data as Float32Array);
+  } catch (err) {
+    console.error("Error generating embedding:", err);
+    throw new Error("Failed to generate embedding");
   }
-   
 }
 
-// Ensure collection exists and has index on userId
 export async function ensureCollection(name: string) {
   try {
     await qdrant.getCollection(name);
@@ -52,7 +47,6 @@ export async function ensureCollection(name: string) {
       },
     });
 
-    // Create index on userId for filtering
     await qdrant.createPayloadIndex(name, {
       field_name: "userId",
       field_schema: "keyword",
@@ -60,7 +54,6 @@ export async function ensureCollection(name: string) {
   }
 }
 
-// Store card in Qdrant
 export async function storeCard(card: {
   id?: string;
   title: string;
@@ -69,15 +62,16 @@ export async function storeCard(card: {
   link?: string;
   userId: string;
 }) {
-  await ensureCollection("cards");
+  const collectionName = "cards";
+  await ensureCollection(collectionName);
 
   const combinedText = `${card.title} ${card.description || ""}`.trim();
   const embedding = await getEmbedding(combinedText);
 
-  await qdrant.upsert("cards", {
+  await qdrant.upsert(collectionName, {
     points: [
       {
-        id: card.id || uuidv4(), // ✅ ensure it's a UUID
+        id: card.id || uuidv4(),
         vector: embedding,
         payload: {
           title: card.title,
@@ -91,20 +85,19 @@ export async function storeCard(card: {
   });
 }
 
-//deleted
 export async function deleteCardFromQdrant(id: string) {
   await qdrant.delete("cards", {
-    points: [id], // ✅ Correct structure for v1.14.0
+    points: [id],
   });
 }
-// Query most relevant card
+
 export async function queryRelatedCard(query: string, userId: string) {
   const embedding = await getEmbedding(query);
 
   const results = await qdrant.search("cards", {
     vector: embedding,
     limit: 10,
-    score_threshold: 0.45,  // ← set similarity threshold (range 0.0 to 1.0)
+    score_threshold: 0.45,
     filter: {
       must: [
         {
@@ -115,24 +108,5 @@ export async function queryRelatedCard(query: string, userId: string) {
     },
   });
 
-  return results.map(result => result.payload);
+  return results.map((result) => result.payload);
 }
-
-
-// // Test script
-// (async () => {
-//   const card = {
-//     title: "How to use TypeScript with React",
-//     description: "Learn the basics of TS in modern React apps",
-//     type: "guide",
-//     link: "https://example.com/ts-react-guide",
-//     userId: "user001",
-//   };
-
-// //   await storeCard(card);
-// //    await storeCard(card);
-// //     await storeCard(card);
-
-// //   const related = await queryRelatedCard("learn react use", "user001");
-// //   console.log("Related card:", related);
-// })();
