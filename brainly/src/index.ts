@@ -12,6 +12,7 @@ import { storeCard, deleteCardFromQdrant, queryRelatedCard } from "./embedding";
 import dotenv from "dotenv";
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET!;
+console.log(JWT_SECRET);
 const app = express();
 
 
@@ -20,7 +21,12 @@ const app = express();
 //   credentials: true // if you need cookies or headers sent
 // }));
 
-app.use(cors());
+app.use(cors({
+  origin: "https://second-brain-chi-seven.vercel.app",
+  credentials: true
+}));
+
+app.options("*", cors()); // allow preflight
 
 
 app.use(express.json());
@@ -38,7 +44,8 @@ app.post("/api/v1/signup", ZodAuth, async (req: any, res: any) => {
       data: newUser,
       token: token,
     });
-  } catch (error: any) {
+  } 
+  catch (error: any) {
     console.log("Signup Error:", error);
     if (error.code === 11000) {
       const duplicateField = Object.keys(error.keyPattern)[0];

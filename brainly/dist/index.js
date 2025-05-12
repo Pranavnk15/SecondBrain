@@ -25,10 +25,19 @@ const utils_1 = require("./utils");
 const embedding_1 = require("./embedding");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const JWT_SECRET = "SKSMDmdks";
+const JWT_SECRET = process.env.JWT_SECRET;
+console.log(JWT_SECRET);
 const app = (0, express_1.default)();
+// app.use(cors({
+//   origin: "https://second-brain-chi-seven.vercel.app",
+//   credentials: true // if you need cookies or headers sent
+// }));
+app.use((0, cors_1.default)({
+    origin: "https://second-brain-chi-seven.vercel.app",
+    credentials: true
+}));
+app.options("*", (0, cors_1.default)()); // allow preflight
 app.use(express_1.default.json());
-app.use((0, cors_1.default)());
 app.post("/api/v1/signup", zodValidation_1.ZodAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, password, email } = req.body;
     const hashPassword = yield bcrypt_1.default.hash(password, 2);
@@ -191,7 +200,7 @@ function main() {
             // Once the connection is successful, log the success message
             console.log("Successfully connected to MongoDB");
             // Start the server
-            app.listen(process.env.PORT, () => {
+            app.listen(process.env.PORT || 4000, () => {
                 console.log("Listening on Port 3000");
             });
         }
@@ -201,4 +210,4 @@ function main() {
         }
     });
 }
-main();
+// main();
