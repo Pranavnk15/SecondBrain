@@ -31,7 +31,7 @@ const Content = new Schema({
 
 const Link  = new Schema ({
     hash: { type: String, required: true },
-    userId: {  type: mongoose.Schema.Types.ObjectId, ref: "User", required:true, unique:true } 
+    userId: {  type: mongoose.Schema.Types.ObjectId, ref: "User", required:true} 
 })
 
 const LinkModel =  mongoose.model("Link",Link);
