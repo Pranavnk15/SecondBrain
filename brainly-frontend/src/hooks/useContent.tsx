@@ -9,7 +9,7 @@ export function useContent() {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/v1/content`, {
         headers: {
-          token: localStorage.getItem("token"),
+          Authorization: "Bearer "+ localStorage.getItem("token") || "",
         },
       });
       setContents(response.data.data);
