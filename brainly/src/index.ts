@@ -24,10 +24,18 @@ const app = express();
 
 app.use(cors({
   origin: "https://second-brain-chi-seven.vercel.app",
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "token"],
 }));
 
-app.options("*", cors()); // allow preflight
+
+app.options("*", cors({
+  origin: "https://second-brain-chi-seven.vercel.app",
+  credentials: true,
+  methods: ["GET", "POST", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "token"]
+}));
 
 
 app.use(express.json());

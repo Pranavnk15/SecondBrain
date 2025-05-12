@@ -43,7 +43,7 @@ export function CreateContentModal({ open, onClose }: CreateContentModalProps) {
       { link, title, description, type },
       {
         headers: {
-          token: localStorage.getItem("token") || "",
+            Authorization: "Bearer "+ localStorage.getItem("token") || "",
         },
       }
     );

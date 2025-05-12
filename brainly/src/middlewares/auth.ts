@@ -1,36 +1,37 @@
-import { Request, Response,NextFunction } from "express";
-import jwt  from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-
-async function auth (req:Request,res:Response,next:NextFunction){
-    try{ 
-         const token = req.headers.token;
-         
-           const decoded = jwt.verify(token as string, JWT_SECRET);
-          if(decoded){
-            //@ts-expect-error
-            req.userId= decoded.userId;
-            //@ts-expect-error
-            req.username = decoded.username;
-            next();
-          }
-          else{
-            res.json({
-                msg:"You are not logged In"
-            })
-          }
-        }
-       
-      catch(err){
-            res.json({
-                err:"invalid token"
-            })
-      } 
-
+// Extend the Express Request type to include custom fields
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+      username?: string;
+    }
+  }
 }
 
-// override the types of the express request object
+async function auth(req: any, res: any, next:any) {
+  try {
+    const authHeader = req.headers.authorization;
 
-export{auth,JWT_SECRET};
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ msg: "Authorization token missing or malformed" });
+    }
 
+    const token = authHeader.split(" ")[1]; // Get the token after 'Bearer'
+
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; username: string };
+
+    req.userId = decoded.userId;
+    req.username = decoded.username;
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ err: "Invalid or expired token" });
+  }
+}
+
+export { auth, JWT_SECRET };

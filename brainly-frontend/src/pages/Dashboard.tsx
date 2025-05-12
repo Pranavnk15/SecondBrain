@@ -40,7 +40,9 @@ export function Dashboard() {
     async function getName() {
       try {
         const response = await axios.get(`${BACKEND_URL}/api/v1/username`, {
-          headers: { token: localStorage.getItem("token") },
+          headers: { 
+            Authorization: "Bearer "+ localStorage.getItem("token")
+           },
         });
         setName(response.data.username);
       } catch {
@@ -67,7 +69,9 @@ const handleDelete = async () => {
   try {
     await axios.delete(`${BACKEND_URL}/api/v1/content`, {
       data: { contentId: contentToDelete },
-      headers: { token: localStorage.getItem("token") },
+      headers: { 
+          Authorization: "Bearer "+ localStorage.getItem("token")
+       },
     });
     toast.update(toastId, {
       render: "Content deleted!",

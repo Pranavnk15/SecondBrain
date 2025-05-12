@@ -42,7 +42,7 @@ export function AiSearch() {
         },
         {
           headers: {
-            token: localStorage.getItem("token") || "",
+             Authorization: "Bearer "+ localStorage.getItem("token")|| "",
             "Content-Type": "application/json",
           },
         }
@@ -84,7 +84,10 @@ export function AiSearch() {
       // Send delete request to the backend
       await axios.delete(`${BACKEND_URL}/api/v1/content`, {
         data: { contentId: contentToDelete },
-        headers: { token: localStorage.getItem("token") },
+        headers: {
+             Authorization: "Bearer "+ localStorage.getItem("token")
+             
+           },
       });
 
       toast.success("Content deleted!", {
