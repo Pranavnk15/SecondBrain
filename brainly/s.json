@@ -1,0 +1,11 @@
+{
+"title": "string",
+    "description": "string",
+    "type": "string",
+    "link": "string",
+    "userId": "string",
+     "vector": {
+    "size": 384,
+    "function": "cosine",
+    "field": "embedding"
+  }}
