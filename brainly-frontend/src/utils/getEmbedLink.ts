@@ -7,22 +7,18 @@ export const getEmbedLink = ({ link, type }: CardProps): string => {
   switch (type) {
     case "youtube": {
       const videoIdMatch = link.match(
-  /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|.+?v=))([^?&]+)/,
-);
-const videoId = videoIdMatch ? videoIdMatch[1] : "";
-return `https://www.youtube.com/embed/${videoId}?autoplay=0&origin=${window.location.origin}`;
-
+        /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([^?&"/]+)/,
+      );
+      const videoId = videoIdMatch ? videoIdMatch[1] : "";
+      if (!videoId) return "";
+      return `https://www.youtube.com/embed/${videoId}?autoplay=0&origin=${window.location.origin}`;
     }
 
-    case "reddit": {
-      // Reddit embedding handled via script, so return the original link
+    case "reddit":
       return link;
-    }
 
-    case "Link": {
-      // Generic links displayed in iframe (if embeddable)
+    case "Link":
       return link.startsWith("http") ? link : `https://${link}`;
-    }
 
     default:
       return link;

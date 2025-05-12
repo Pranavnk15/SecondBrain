@@ -82,6 +82,8 @@ export function Card({ title, link, type, onDelete, onShare }: CardProps) {
     }
   };
 
+  const embedLink = getEmbedLink({ type, link });
+
   return (
     <div className="w-96 h-[440px] rounded-xl border border-cyan-500/20 bg-gradient-to-br from-white/5 via-white/10 to-white/5 shadow-[0_0_20px_#0ff2,0_0_40px_#0ff2] transition hover:shadow-[0_0_30px_#0ff5,0_0_60px_#0ff5] overflow-hidden backdrop-blur-xl relative">
       {/* Header */}
@@ -121,15 +123,17 @@ export function Card({ title, link, type, onDelete, onShare }: CardProps) {
             </div>
           ) : type === "reddit" ? (
             <div ref={redditContainerRef} className="w-full h-full px-2 pt-2" />
-          ) : (
+          ) : embedLink ? (
             <iframe
               className="w-full h-[100%] min-h-[380px] rounded-md border border-white/10"
-              src={getEmbedLink({ type, link })}
+              src={embedLink}
               title={title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             />
+          ) : (
+            <div className="text-sm text-red-400 p-4">Invalid YouTube link</div>
           )}
         </div>
       </div>
