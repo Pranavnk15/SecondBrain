@@ -15,30 +15,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JWT_SECRET = void 0;
 exports.auth = auth;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const JWT_SECRET = "SKSMDmdks";
+const JWT_SECRET = process.env.JWT_SECRET;
 exports.JWT_SECRET = JWT_SECRET;
 function auth(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const token = req.headers.token;
+            const authHeader = req.headers.authorization;
+            if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                return res.status(401).json({ msg: "Authorization token missing or malformed" });
+            }
+            const token = authHeader.split(" ")[1]; // Get the token after 'Bearer'
             const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
-            if (decoded) {
-                //@ts-expect-error
-                req.userId = decoded.userId;
-                //@ts-expect-error
-                req.username = decoded.username;
-                next();
-            }
-            else {
-                res.json({
-                    msg: "You are not logged In"
-                });
-            }
+            req.userId = decoded.userId;
+            req.username = decoded.username;
+            next();
         }
         catch (err) {
-            res.json({
-                err: "invalid token"
-            });
+            return res.status(401).json({ err: "Invalid or expired token" });
         }
     });
 }

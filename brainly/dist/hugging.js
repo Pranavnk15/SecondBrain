@@ -19,38 +19,37 @@ exports.deleteCardFromQdrant = deleteCardFromQdrant;
 exports.queryRelatedCard = queryRelatedCard;
 const dotenv_1 = __importDefault(require("dotenv"));
 const js_client_rest_1 = require("@qdrant/js-client-rest");
-const transformers_1 = require("@xenova/transformers");
+const cohere_ai_1 = require("cohere-ai");
 const uuid_1 = require("uuid");
 dotenv_1.default.config();
 // ✅ Environment validation
-if (!process.env.QDRANT_URL || !process.env.QDRANT_API_KEY) {
-    throw new Error("QDRANT_URL or QDRANT_API_KEY is missing in environment variables.");
+if (!process.env.QDRANT_URL || !process.env.QDRANT_API_KEY || !process.env.COHERE_API_KEY) {
+    throw new Error("Missing environment variables: QDRANT_URL, QDRANT_API_KEY, or COHERE_API_KEY.");
 }
 // ✅ Initialize Qdrant Client
 const qdrant = new js_client_rest_1.QdrantClient({
     url: process.env.QDRANT_URL,
     apiKey: process.env.QDRANT_API_KEY,
 });
-// ✅ Singleton embedder
-let embedder;
-function loadModel() {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!embedder) {
-            embedder = yield (0, transformers_1.pipeline)("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
-                quantized: false,
-            });
-        }
-    });
-}
+// ✅ Initialize Cohere Client
+const cohereClient = new cohere_ai_1.CohereClient({ token: process.env.COHERE_API_KEY });
+// ✅ Modify the embedding function according to the Cohere API response
 function getEmbedding(text) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         try {
-            yield loadModel();
-            const output = yield embedder(text, {
-                pooling: "mean",
-                normalize: true,
+            const res = yield cohereClient.v2.embed({
+                texts: [text],
+                model: "embed-v4.0",
+                inputType: "classification",
+                embeddingTypes: ["float"],
             });
-            return Array.from(output.data);
+            // ✅ Validate the structure before accessing
+            const embeddingArray = (_b = (_a = res === null || res === void 0 ? void 0 : res.embeddings) === null || _a === void 0 ? void 0 : _a.float) === null || _b === void 0 ? void 0 : _b[0];
+            if (!embeddingArray || embeddingArray.length === 0) {
+                throw new Error("Failed to generate valid embedding");
+            }
+            return embeddingArray;
         }
         catch (err) {
             console.error("Error generating embedding:", err);
@@ -70,7 +69,7 @@ function ensureCollection(name) {
         catch (_a) {
             yield qdrant.createCollection(name, {
                 vectors: {
-                    size: 384,
+                    size: 1536,
                     distance: "Cosine",
                 },
             });
@@ -82,12 +81,18 @@ function ensureCollection(name) {
         ensuredCollections.add(name);
     });
 }
+// Store card in Qdrant with embedding
 function storeCard(card) {
     return __awaiter(this, void 0, void 0, function* () {
         const collectionName = "cards";
         yield ensureCollection(collectionName);
         const combinedText = `${card.title} ${card.description || ""}`.trim();
         const embedding = yield getEmbedding(combinedText);
+        //@ts-ignore
+        console.log("Generated Embedding:", embedding);
+        console.log("Generated length:", embedding.length);
+        // Log the embedding to verify
+        //   return;
         yield qdrant.upsert(collectionName, {
             points: [
                 {
@@ -105,6 +110,7 @@ function storeCard(card) {
         });
     });
 }
+// Function to delete a card from Qdrant by its ID
 function deleteCardFromQdrant(id) {
     return __awaiter(this, void 0, void 0, function* () {
         yield qdrant.delete("cards", {
@@ -112,6 +118,7 @@ function deleteCardFromQdrant(id) {
         });
     });
 }
+// Query related cards from Qdrant based on a given query and userId
 function queryRelatedCard(query, userId) {
     return __awaiter(this, void 0, void 0, function* () {
         const embedding = yield getEmbedding(query);
@@ -131,3 +138,23 @@ function queryRelatedCard(query, userId) {
         return results.map((result) => (Object.assign(Object.assign({}, result.payload), { score: result.score })));
     });
 }
+// Test function to store a sample card
+function testStoreCard() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const testCard = {
+            title: "Test Card Title",
+            description: "This is a test card description.",
+            type: "Info",
+            userId: "user123",
+        };
+        try {
+            yield storeCard(testCard);
+            console.log("Card stored successfully!");
+        }
+        catch (error) {
+            console.error("Error storing card:", error);
+        }
+    });
+}
+// Run the test
+testStoreCard();

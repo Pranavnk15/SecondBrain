@@ -14,7 +14,7 @@ import {
   storeCard,
   deleteCardFromQdrant,
   queryRelatedCard,
-  loadModel
+  
 } from "./embedding";
 
 dotenv.config();
@@ -233,8 +233,7 @@ async function main() {
     await mongoose.connect(MONGO_URL);
     console.log("✅ Connected to MongoDB");
 
-     await loadModel();
-    console.log("modele loaded")
+   
       
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`);
