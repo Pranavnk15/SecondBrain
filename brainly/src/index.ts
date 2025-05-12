@@ -23,22 +23,35 @@ const PORT = Number(process.env.PORT) || 4000;
 const MONGO_URL = process.env.MONGO_URL!;
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-// Middleware
+
+
+// Dynamic CORS configuration
 app.use(cors({
-  origin: "https://second-brain-chi-seven.vercel.app",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    return callback(null, origin); // Reflect the request origin
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "token"],
 }));
 
+// Optional: Handle preflight requests
 app.options("*", cors({
-  origin: "https://second-brain-chi-seven.vercel.app",
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    return callback(null, origin);
+  },
   credentials: true,
 }));
 
-
+// Optional: Manually set headers (redundant but okay for extra control)
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://second-brain-chi-seven.vercel.app");
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, token");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
