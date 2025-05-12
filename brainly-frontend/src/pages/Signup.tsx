@@ -60,7 +60,7 @@ if (!/\S+@\S+\.\S+/.test(email) || !validTLDs.includes(tld)) {
         password,
         email
       });
-
+       console.log(response.data.token);
       localStorage.setItem("token", response.data.token);
       navigate("/dashboard");
       toast.success("🦄SignedUp in successfully!", {
