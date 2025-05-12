@@ -17,12 +17,15 @@ import { LogOut } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
 
+
 interface ContentItem {
   _id: string;
   title: string;
   link: string;
   type: string;
 }
+const validTypes = ["youtube", "twitter", "reddit", "Link"] as const;
+type ValidType = (typeof validTypes)[number];
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -207,32 +210,40 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="flex-1 mt-8 overflow-y-auto pb-6 flex flex-wrap gap-6">
-          {[...filteredContents]
-            .slice()
-            .reverse()
-            .map(({ type, link, title, _id }) => (
-              <Card
-                key={_id}
-                type={type}
-                link={link}
-                title={title}
-                onShare={() => {
-                  navigator.clipboard.writeText(link);
-                  toast.info("Link copied to clipboard!", {
-                    position: "top-center",
-                    autoClose: 400,
-                    theme: "dark",
-                    transition: Bounce,
-                  });
-                }}
-                onDelete={() => {
-                  setContentToDelete(_id);
-                  setDeleteModalOpen(true);
-                }}
-              />
-            ))}
-        </div>
+
+<div className="flex-1 mt-8 overflow-y-auto pb-6 flex flex-wrap gap-6">
+  {[...filteredContents]
+    .slice()
+    .reverse()
+    .map(({ type, link, title, _id }) => {
+      const safeType: ValidType = validTypes.includes(type as ValidType)
+        ? (type as ValidType)
+        : "Link";
+
+      return (
+        <Card
+          key={_id}
+          type={safeType}
+          link={link}
+          title={title}
+          onShare={() => {
+            navigator.clipboard.writeText(link);
+            toast.info("Link copied to clipboard!", {
+              position: "top-center",
+              autoClose: 400,
+              theme: "dark",
+              transition: Bounce,
+            });
+          }}
+          onDelete={() => {
+            setContentToDelete(_id);
+            setDeleteModalOpen(true);
+          }}
+        />
+      );
+    })}
+</div>
+
       </div>
     </div>
   );
