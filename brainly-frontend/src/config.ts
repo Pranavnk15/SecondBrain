@@ -1,3 +1,3 @@
 
 
-export const BACKEND_URL ="https://secondbrain-xabn.onrender.com";
+export const BACKEND_URL ="https://secondbrain-08or.onrender.com";
