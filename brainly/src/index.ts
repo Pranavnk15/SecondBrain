@@ -11,17 +11,19 @@ import { random } from "./utils";
 import { storeCard, deleteCardFromQdrant, queryRelatedCard } from "./embedding";
 import dotenv from "dotenv";
 dotenv.config();
-const JWT_SECRET = "SKSMDmdks";
+const JWT_SECRET = process.env.JWT_SECRET!;
 const app = express();
 
+
+// app.use(cors({
+//   origin: "https://second-brain-chi-seven.vercel.app",
+//   credentials: true // if you need cookies or headers sent
+// }));
+
+app.use(cors());
+
+
 app.use(express.json());
-
-
-app.use(cors({
-  origin: "https://second-brain-chi-seven.vercel.app",
-  credentials: true // if you need cookies or headers sent
-}));
-
 
 app.post("/api/v1/signup", ZodAuth, async (req: any, res: any) => {
   const { username, password, email } = req.body;
