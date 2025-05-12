@@ -5,16 +5,21 @@ import { v4 as uuidv4 } from "uuid";
 
 dotenv.config();
 
-// Initialize Qdrant Client
+// ✅ Environment validation
+if (!process.env.QDRANT_URL || !process.env.QDRANT_API_KEY) {
+  throw new Error("QDRANT_URL or QDRANT_API_KEY is missing in environment variables.");
+}
+
+// ✅ Initialize Qdrant Client
 const qdrant = new QdrantClient({
-  url: process.env.QDRANT_URL!,
-  apiKey: process.env.QDRANT_API_KEY!,
+  url: process.env.QDRANT_URL,
+  apiKey: process.env.QDRANT_API_KEY,
 });
 
-// Singleton embedder
+// ✅ Singleton embedder
 let embedder: any;
 
-async function loadModel() {
+export async function loadModel() {
   if (!embedder) {
     embedder = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
       quantized: false,
@@ -36,7 +41,12 @@ export async function getEmbedding(text: string): Promise<number[]> {
   }
 }
 
+// ✅ Collection creation caching to prevent race conditions
+const ensuredCollections = new Set<string>();
+
 export async function ensureCollection(name: string) {
+  if (ensuredCollections.has(name)) return;
+
   try {
     await qdrant.getCollection(name);
   } catch {
@@ -52,6 +62,8 @@ export async function ensureCollection(name: string) {
       field_schema: "keyword",
     });
   }
+
+  ensuredCollections.add(name);
 }
 
 export async function storeCard(card: {
@@ -108,5 +120,8 @@ export async function queryRelatedCard(query: string, userId: string) {
     },
   });
 
-  return results.map((result) => result.payload);
+  return results.map((result) => ({
+    ...result.payload,
+    score: result.score, // Optional: include score
+  }));
 }

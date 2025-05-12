@@ -14,6 +14,7 @@ import {
   storeCard,
   deleteCardFromQdrant,
   queryRelatedCard,
+  loadModel
 } from "./embedding";
 
 dotenv.config();
@@ -212,22 +213,6 @@ app.post("/api/v1/search", auth, async (req: any, res) => {
   }
 });
 
-
-// Connect to MongoDB and start server
-async function main() {
-  try {
-    await mongoose.connect(MONGO_URL);
-    console.log("✅ Connected to MongoDB");
-
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
-  }
-}
-
-
 app.get("/debug-qdrant", async (req, res) => {
   try {
     const response = await axios.get(`${process.env.QDRANT_URL}/collections`, {
@@ -241,5 +226,24 @@ app.get("/debug-qdrant", async (req, res) => {
     res.status(500).json({ msg: "Qdrant test failed" });
   }
 })
+
+// Connect to MongoDB and start server
+async function main() {
+  try {
+    await mongoose.connect(MONGO_URL);
+    console.log("✅ Connected to MongoDB");
+
+     await loadModel();
+    console.log("modele loaded")
+      
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err);
+  }
+}
+
+
 
 main();
