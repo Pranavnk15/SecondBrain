@@ -30,32 +30,20 @@ const embedding_1 = require("./embedding");
 const p_queue_1 = __importDefault(require("p-queue"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const PORT = Number(process.env.PORT) || 4000;
 const MONGO_URL = process.env.MONGO_URL;
 const JWT_SECRET = process.env.JWT_SECRET;
-// User-specific queues
-const userQueues = new Map();
-function getUserQueue(userId) {
-    if (!userQueues.has(userId)) {
-        userQueues.set(userId, new p_queue_1.default({ concurrency: 1 }));
-    }
-    return userQueues.get(userId);
-}
-// CORS config
+// MongoDB connection
+mongoose_1.default
+    .connect(MONGO_URL)
+    .then(() => console.log("✅ Connected to MongoDB"))
+    .catch((err) => console.error("❌ MongoDB connection error:", err));
+// Middleware
 const allowedOrigin = "https://second-brain-chi-seven.vercel.app";
 app.use((0, cors_1.default)({
     origin: allowedOrigin,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "token"],
-}));
-app.options("*", (0, cors_1.default)({
-    origin: (origin, callback) => {
-        if (!origin)
-            return callback(null, true);
-        return callback(null, origin);
-    },
-    credentials: true,
 }));
 app.use((req, res, next) => {
     const origin = req.headers.origin;
@@ -67,6 +55,15 @@ app.use((req, res, next) => {
     next();
 });
 app.use(express_1.default.json());
+// User-specific queues
+const userQueues = new Map();
+function getUserQueue(userId) {
+    if (!userQueues.has(userId)) {
+        userQueues.set(userId, new p_queue_1.default({ concurrency: 1 }));
+    }
+    return userQueues.get(userId);
+}
+// Routes
 // Signup
 app.post("/api/v1/signup", zodValidation_1.ZodAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, password, email } = req.body;
@@ -201,20 +198,5 @@ app.get("/debug-qdrant", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(500).json({ msg: "Qdrant test failed" });
     }
 }));
-// Connect to MongoDB and start server
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield mongoose_1.default.connect(MONGO_URL);
-            console.log("✅ Connected to MongoDB");
-            // app.listen(PORT, "0.0.0.0", () => {
-            //   console.log(`🚀 Server running on port ${PORT}`);
-            // });
-        }
-        catch (err) {
-            console.error("❌ MongoDB connection error:", err);
-        }
-    });
-}
+// Export the app as a serverless handler
 exports.handler = (0, serverless_http_1.default)(app);
-main();

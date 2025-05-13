@@ -1,6 +1,6 @@
 import express from "express";
 import axios from "axios";
-import serverless from 'serverless-http';
+import serverless from "serverless-http";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -21,35 +21,22 @@ import PQueue from "p-queue";
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 4000;
 const MONGO_URL = process.env.MONGO_URL!;
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-// User-specific queues
-const userQueues: Map<string, PQueue> = new Map();
-function getUserQueue(userId: string): PQueue {
-  if (!userQueues.has(userId)) {
-    userQueues.set(userId, new PQueue({ concurrency: 1 }));
-  }
-  return userQueues.get(userId)!;
-}
+// MongoDB connection
+mongoose
+  .connect(MONGO_URL)
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// CORS config
+// Middleware
 const allowedOrigin = "https://second-brain-chi-seven.vercel.app";
-
 app.use(cors({
   origin: allowedOrigin,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "token"],
-}));
-
-app.options("*", cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    return callback(null, origin);
-  },
-  credentials: true,
 }));
 
 app.use((req, res, next) => {
@@ -63,8 +50,19 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+// User-specific queues
+const userQueues: Map<string, PQueue> = new Map();
+function getUserQueue(userId: string): PQueue {
+  if (!userQueues.has(userId)) {
+    userQueues.set(userId, new PQueue({ concurrency: 1 }));
+  }
+  return userQueues.get(userId)!;
+}
+
+// Routes
+
 // Signup
-app.post("/api/v1/signup", ZodAuth, async (req:any, res:any) => {
+app.post("/api/v1/signup", ZodAuth, async (req: any, res: any) => {
   const { username, password, email } = req.body;
   const hashedPassword = await bcrypt.hash(password, 2);
   try {
@@ -81,7 +79,7 @@ app.post("/api/v1/signup", ZodAuth, async (req:any, res:any) => {
 });
 
 // Signin
-app.post("/api/v1/signin", ZodAuth, async (req:any, res:any) => {
+app.post("/api/v1/signin", ZodAuth, async (req: any, res: any) => {
   const { email, password } = req.body;
   const user = await UserModel.findOne({ email });
   if (!user) return res.status(404).json({ msg: "User doesn't exist" });
@@ -141,7 +139,7 @@ app.delete("/api/v1/content", auth, async (req: any, res) => {
 });
 
 // Share logic (queued)
-app.post("/api/v1/brain/share", auth, async (req: any, res) => {
+app.post("/api/v1/brain/share", auth, async (req: any, res: any) => {
   const { share } = req.body;
   const userId = req.userId;
   const queue = getUserQueue(userId);
@@ -166,7 +164,7 @@ app.post("/api/v1/brain/share", auth, async (req: any, res) => {
 });
 
 // Share access by hash
-app.get("/api/v1/brain/:shareLink", async (req:any, res:any) => {
+app.get("/api/v1/brain/:shareLink", async (req: any, res: any) => {
   const { shareLink } = req.params;
   const link = await LinkModel.findOne({ hash: shareLink });
   if (!link) return res.status(404).json({ msg: "Invalid link" });
@@ -179,7 +177,7 @@ app.get("/api/v1/brain/:shareLink", async (req:any, res:any) => {
 });
 
 // Semantic Search (queued)
-app.post("/api/v1/search", auth, async (req: any, res) => {
+app.post("/api/v1/search", auth, async (req: any, res: any) => {
   const { query } = req.body;
   const userId = req.userId;
   const queue = getUserQueue(userId);
@@ -197,7 +195,7 @@ app.post("/api/v1/search", auth, async (req: any, res) => {
 app.get("/debug-qdrant", async (req, res) => {
   try {
     const response = await axios.get(`${process.env.QDRANT_URL}/collections`, {
-      headers: { 'Authorization': `Bearer ${process.env.QDRANT_API_KEY}` },
+      headers: { 'Authorization':`Bearer ${process.env.QDRANT_API_KEY}`},
     });
     res.json(response.data);
   } catch (err: any) {
@@ -206,18 +204,5 @@ app.get("/debug-qdrant", async (req, res) => {
   }
 });
 
-// Connect to MongoDB and start server
-async function main() {
-  try {
-    await mongoose.connect(MONGO_URL);
-    console.log("✅ Connected to MongoDB");
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
-  }
-}
-// export const handler = serverless(app);
-
-main();
+// Export the app as a serverless handler
+export const handler = serverless(app);
