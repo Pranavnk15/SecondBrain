@@ -29,7 +29,7 @@ const Content = new mongoose_2.Schema({
 });
 const Link = new mongoose_2.Schema({
     hash: { type: String, required: true },
-    userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true, unique: true }
+    userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true }
 });
 const LinkModel = mongoose_1.default.model("Link", Link);
 exports.LinkModel = LinkModel;
