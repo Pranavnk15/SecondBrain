@@ -1,5 +1,6 @@
 import express from "express";
 import axios from "axios";
+import serverless from 'serverless-http';
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -217,5 +218,6 @@ async function main() {
     console.error("❌ MongoDB connection error:", err);
   }
 }
+export const handler = serverless(app);
 
 main();
