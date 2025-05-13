@@ -1,4 +1,4 @@
-import { getEmbedding, storeCard, queryRelatedCard } from "./embedding";
+import { getEmbedding, storeCard, queryRelatedCard } from "./embedding.js";
 import { QdrantClient } from "@qdrant/js-client-rest";
 import dotenv from "dotenv";
 dotenv.config();
@@ -40,7 +40,10 @@ const qdrant = new QdrantClient({
 
     // Scroll to inspect what's stored
     const scroll = await qdrant.scroll("cards", { limit: 5 });
-    console.log("Stored payloads:", scroll.points.map(p => p.payload));
+    console.log(
+      "Stored payloads:",
+      scroll.points.map((p) => p.payload)
+    );
 
     // Search now
     const results = await queryRelatedCard(fullText, userId);

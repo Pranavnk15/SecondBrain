@@ -1,40 +1,31 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserModel = exports.TagsModel = exports.ContentModel = exports.LinkModel = void 0;
-const mongoose_1 = __importDefault(require("mongoose"));
-const mongoose_2 = require("mongoose");
-const Users = new mongoose_2.Schema({
+import mongoose from "mongoose";
+import { Schema } from "mongoose";
+const Users = new Schema({
     username: { type: String, required: true },
     email: { type: String, unique: true, required: true },
     password: { type: String, required: true }
 });
-const Tags = new mongoose_2.Schema({
+const Tags = new Schema({
     title: String
 });
-const TagsModel = mongoose_1.default.model("Tags", Tags);
-exports.TagsModel = TagsModel;
-const UserModel = mongoose_1.default.model("User", Users);
-exports.UserModel = UserModel;
-const Content = new mongoose_2.Schema({
+const TagsModel = mongoose.model("Tags", Tags);
+const UserModel = mongoose.model("User", Users);
+const Content = new Schema({
     link: String,
     type: { type: String },
     title: String,
     description: String,
     qdrantId: { type: String, required: true }, // ✅ Add this line
-    tags: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "Tags" }],
-    userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true }
+    tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tags" }],
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 });
-const Link = new mongoose_2.Schema({
+const Link = new Schema({
     hash: { type: String, required: true },
-    userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true }
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 });
-const LinkModel = mongoose_1.default.model("Link", Link);
-exports.LinkModel = LinkModel;
-const ContentModel = mongoose_1.default.model("Content", Content);
-exports.ContentModel = ContentModel;
+const LinkModel = mongoose.model("Link", Link);
+const ContentModel = mongoose.model("Content", Content);
+export { LinkModel, ContentModel, TagsModel, UserModel };
 // module.exports={
 // LinkModel:LinkModel,
 // ContentModel:ContentModel,

@@ -1,12 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ZodAuth = ZodAuth;
-const zod_1 = require("zod");
+import { z } from 'zod';
 function ZodAuth(req, res, next) {
-    const requiredBody = zod_1.z.object({
-        username: zod_1.z.string().min(2, "Username must be at least 2 characters").max(20, "Username must not exceed 20 characters").optional(),
-        password: zod_1.z.string().min(6, "Password must be at least 6 characters").max(20, "password must not exceed 20 characters"),
-        email: zod_1.z.string().email()
+    const requiredBody = z.object({
+        username: z.string().min(2, "Username must be at least 2 characters").max(20, "Username must not exceed 20 characters").optional(),
+        password: z.string().min(6, "Password must be at least 6 characters").max(20, "password must not exceed 20 characters"),
+        email: z.string().email()
     });
     const result = requiredBody.safeParse(req.body);
     if (!result.success) {
@@ -21,3 +18,4 @@ function ZodAuth(req, res, next) {
         next();
     }
 }
+export { ZodAuth };
