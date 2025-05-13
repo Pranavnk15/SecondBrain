@@ -2,76 +2,66 @@ import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios,{ AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import { BACKEND_URL } from "../config";
 import { motion } from "framer-motion";
 import FallingStars from "./FallingStar";
-import {toast,Bounce } from "react-toastify"
+import { toast, Bounce } from "react-toastify";
 
 export function Signin() {
-  // const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   async function signin() {
+    const email = emailRef.current?.value || "";
+    const password = passwordRef.current?.value || "";
+
+    // Show loading toast
+    const toastId = toast.loading("Signing you in...", {
+      position: "top-center",
+      theme: "dark"
+    });
+
     try {
-      const email = emailRef.current?.value;
-      const password = passwordRef.current?.value;
-      // const email = emailRef.current?.value;
-
       const response = await axios.post(
-  BACKEND_URL + "/api/v1/signin",
-  {
-    email,
-    password,
-  },
-  {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    withCredentials: true,
-  }
-);
+        BACKEND_URL + "/api/v1/signin",
+        { email, password },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
 
-
-      const jwt = response.data.token;
-      localStorage.setItem("token", jwt);
-      
+      localStorage.setItem("token", response.data.token);
       navigate("/dashboard");
-      toast.success('🦄Signed in successfully!', {
-position: "top-center",
-autoClose: 2000,
-hideProgressBar: false,
-closeOnClick: false,
-pauseOnHover: true,
-draggable: true,
-progress: undefined,
-theme: "dark",
-transition: Bounce,
-});
+
+      // Update loading toast to success
+      toast.update(toastId, {
+        render: "🦄 Signed in successfully!",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000,
+        transition: Bounce,
+      });
 
     } catch (err) {
-  const error = err as AxiosError<{ msg: string }>;
-  console.log(error);
+      const error = err as AxiosError<{ msg: string }>;
 
-  toast.error(error.response?.data.msg || "An error occurred", {
-    position: "top-center",
-    autoClose: 3000,
-    hideProgressBar: false,
-    closeOnClick: false,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "dark",
-    transition: Bounce
-  });
+      // Update loading toast to error
+      toast.update(toastId, {
+        render: error.response?.data.msg || "An error occurred",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+        transition: Bounce,
+      });
     }
   }
 
   return (
-    <div className=" h-screen w-screen bg-black flex items-center justify-center relative overflow-hidden px-4">
-        <FallingStars/>
+    <div className="h-screen w-screen bg-black flex items-center justify-center relative overflow-hidden px-4">
+      <FallingStars />
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -100,7 +90,6 @@ transition: Bounce,
 
         <div className="flex flex-col space-y-5 w-full">
           <Input reference={emailRef} placeholder="Email" />
-          {/* <Input reference={passwordRef} placeholder="Password" /> */}
           <Input reference={passwordRef} placeholder="Password" />
           <motion.div
             whileHover={{ scale: 1.05 }}

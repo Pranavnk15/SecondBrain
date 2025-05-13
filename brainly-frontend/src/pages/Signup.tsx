@@ -29,17 +29,27 @@ export function Signup() {
       isValid = false;
     }
 
-const parts = email.split(".");
-const tld = parts[parts.length - 1].toLowerCase();
-const validTLDs = ["com", "org", "net", "io", "dev", "app", "co", "edu", "gov", "in", "us"];
+    if (username.length > 20) {
+      newErrors.username = "Username must be at max 20 characters";
+      isValid = false;
+    }
 
-if (!/\S+@\S+\.\S+/.test(email) || !validTLDs.includes(tld)) {
-  newErrors.email = "Enter a valid email address with a real TLD";
-  isValid = false;
-}
+    const parts = email.split(".");
+    const tld = parts[parts.length - 1].toLowerCase();
+    const validTLDs = ["com", "org", "net", "io", "dev", "app", "co", "edu", "gov", "in", "us"];
+
+    if (!/\S+@\S+\.\S+/.test(email) || !validTLDs.includes(tld)) {
+      newErrors.email = "Enter a valid email address with a real TLD";
+      isValid = false;
+    }
 
     if (password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
+      isValid = false;
+    }
+
+    if (password.length > 20) {
+      newErrors.password = "Password must be at max 20 characters";
       isValid = false;
     }
 
@@ -54,50 +64,49 @@ if (!/\S+@\S+\.\S+/.test(email) || !validTLDs.includes(tld)) {
 
     if (!validateFields(username, password, email)) return;
 
+    // Show loading toast
+    const toastId = toast.loading("Creating your account...", {
+      position: "top-center",
+      theme: "dark"
+    });
+
     try {
       const response = await axios.post(
-  BACKEND_URL + "/api/v1/signup",
-  {
-    username,
-    password,
-    email,
-  },
-  {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    withCredentials: true,
-  }
-);
+        BACKEND_URL + "/api/v1/signup",
+        { username, password, email },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
 
-       console.log(response.data.token);
       localStorage.setItem("token", response.data.token);
       navigate("/dashboard");
-      toast.success("🦄SignedUp in successfully!", {
-        position: "top-center",
+
+      // Update loading toast to success
+      toast.update(toastId, {
+        render: "🎉 Signed up successfully!",
+        type: "success",
+        isLoading: false,
         autoClose: 2000,
-        theme: "dark",
+        transition: Bounce
+      });
+    } catch (e: unknown) {
+      const errorMessage = axios.isAxiosError(e) && e.response
+        ? e.response.data.msg
+        : "An unknown error occurred";
+
+      // Update loading toast to error
+      toast.update(toastId, {
+        render: errorMessage,
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
         transition: Bounce
       });
     }
-    catch (e: unknown) {
-  if (axios.isAxiosError(e) && e.response) {
-    toast.error(e.response.data.msg, {
-      position: "top-center",
-      autoClose: 3000,
-      theme: "dark",
-      transition: Bounce,
-    });
-  } else {
-    toast.error("An unknown error occurred", {
-      position: "top-center",
-      autoClose: 3000,
-      theme: "dark",
-      transition: Bounce,
-    });
-  }
-}
-
   }
 
   return (

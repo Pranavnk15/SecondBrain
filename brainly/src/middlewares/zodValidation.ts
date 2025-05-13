@@ -4,8 +4,8 @@ import {z} from 'zod'
 
 function ZodAuth (req:Request,res:Response,next:NextFunction){
     const requiredBody = z.object({
-        username: z.string().min(2, "Username must be at least 3 characters").max(15, "Username must not exceed 15 characters").optional(),
-        password: z.string().min(6, "Password must be at least 3 characters").max(20,"password must not exceed 20 characters"),
+        username: z.string().min(2, "Username must be at least 2 characters").max(20, "Username must not exceed 20 characters").optional(),
+        password: z.string().min(6, "Password must be at least 6 characters").max(20,"password must not exceed 20 characters"),
         email: z.string().email() 
         })
     

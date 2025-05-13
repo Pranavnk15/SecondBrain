@@ -88,7 +88,7 @@ export async function storeCard(card: {
   const embedding = await getEmbedding(combinedText);
 
   //@ts-ignore
-console.log("Generated Embedding:", embedding);
+// console.log("Generated Embedding:", embedding);
 console.log("Generated length:", embedding.length);
 // Log the embedding to verify
 //   return;
